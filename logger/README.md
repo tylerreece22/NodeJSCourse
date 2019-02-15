@@ -1,4 +1,4 @@
-#Logger
+# Logger
 This module shows how to create a simple logger with the use of an event system with EventEmitter. 
 
 For my reference:
