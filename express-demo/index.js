@@ -1,47 +1,43 @@
-const Joi = require('joi');
+const debug = require('debug')('app:startup');
+const config = require('config');
+const helmet = require('helmet');
+const morgan = require('morgan');
 const express = require('express');
+const logger = require('./middleware/logger');
+const courses = require('./routes/courses')
+const home = require('./routes/courses')
 const app = express();
 
-// app.use(express.json);
+// Adds templating engine
+app.set('view engine', 'pug');
+// Optional setting for folder where templates are located
+app.set('views', './views');
 
-const courses = [
-    {id: 1, name: 'course1'},
-    {id: 2, name: 'course2'},
-    {id: 3, name: 'course3'},
-];
-app.get('/', (req, res) => {
-    res.send('Hello There!')
-});
+app.use(express.json());
+app.use(helmet());
+app.use(express.urlencoded({extended: true}));
+app.use(express.static('public'));
+app.use(logger);
+app.use('/api/courses', courses);
+app.use('/', home);
 
-app.get('/api/courses', (req, res) => {
-    res.send(courses)
-});
+if (app.get('env') === 'development') {
+    app.use(morgan('tiny'));
+    debug('Morgan enabled....')
+}
 
-app.get('/api/courses/:id', (req, res) => {
-    const course = courses.find(c => c.id === parseInt(req.params.id))
-    if (!course) res.status(404).send('The course with the given ID was not found')
-    res.send(course)
-});
+// Db work..
+debug('Connected to the database...');
 
-app.post('/api/courses', (req, res) => {
-    const schema = {
-        name: Joi.string().min(3).required()
-    }
-    const result = Joi.validate(req.body, schema);
-    console.log(result);
+// Configuration
+debug(`Application name: ${config.get('name')}`)
+debug(`Mail Server: ${config.get('mail.host')}`)
+debug(`Mail password: ${config.get('mail.password')}`)
 
-    if (!req.body.name || req.body.name.length < 3) {
-        res.status(400).send('Name is required and should contain at least 3 characters')
-    }
-
-    const course = {
-        id: courses.length + 1,
-        name: req.body.name
-    }
-
-    courses.push(course)
-    res.send(course)
-});
+app.use((req, res, next) => {
+    console.log('Authenticating...')
+    next()
+})
 
 const port = process.env.PORT || 3000;
 app.listen(port, () => console.log(`Listening on port ${port}...`));

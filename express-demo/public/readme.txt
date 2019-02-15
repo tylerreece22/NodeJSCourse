@@ -1,0 +1,1 @@
+This file is publicly accessible by going to /readme.txt
