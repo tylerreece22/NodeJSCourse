@@ -1,2 +1,2 @@
 # Vidly - A Smaller Express Application
-This application was just used to refactor the routing
+This is the core application we are building onto for this course using all the different functionality we learned
