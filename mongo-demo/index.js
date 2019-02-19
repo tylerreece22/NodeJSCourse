@@ -6,11 +6,47 @@ mongoose.connect('mongodb://localhost/playground')
     .catch(e => console.log('Could not connect to MongoDB...', e))
 
 const courseSchema = new mongoose.Schema({
-    name: String,
+    name: {
+        type: String,
+        required: true,
+        minLength: 5,
+        maxLength: 255,
+        // match: /pattern/
+    },
+    category: {
+        type: String,
+        required: true,
+        enum: ['web', 'mobile', 'network'],
+        lowercase: true,
+        // uppercase: true,
+        trim: true
+    },
     author: String,
-    tags: [String],
+    tags: {
+        type: Array,
+        validate: { // Async validator
+            isAsync: true,
+            validator: function (v, callback) {
+                setTimeout(() => {
+                    const result = v && v.length > 0
+                    callback(result)
+                }, 4000)
+            },
+            message: 'A course should have at least one tag.'
+        }
+    },
     date: {type: Date, default: Date.now()},
-    isPublished: Boolean
+    isPublished: Boolean,
+    price: {
+        type: Number,
+        required: function () { // need to use this function because arrow functions dont carry 'this value'
+            return this.isPublished
+        },
+        min: 10,
+        max: 200,
+        get: v => Math.round(v),
+        set: v => Math.round(v)
+    }
 })
 
 const Course = mongoose.model('Courses', courseSchema)
@@ -18,14 +54,22 @@ const Course = mongoose.model('Courses', courseSchema)
 async function createCourse() {
     const course = new Course({
         name: 'Angular Course',
+        category: '-',
         author: 'Tyler',
-        tags: ['angular', 'frontend'],
-        isPublished: true
+        tags: [],
+        isPublished: true,
+        price: 10
     })
-
-    const result = await course.save()
-    console.log(result)
+    try {
+        const result = await course.save()
+        console.log(result)
+    } catch (e) {
+        for (field in e.errors)
+            console.log(e.errors[field].message)
+    }
 }
+
+createCourse()
 
 async function getCourses() {
     // Using this for demonstration
@@ -66,12 +110,12 @@ async function queryFirstUpdateCourse(id) {
 
 // Update first approach to updating documents
 async function updateFirstUpdateCourse(id) {
-    const course = await Course.findByIdAndUpdate(id,{
+    const course = await Course.findByIdAndUpdate(id, {
         $set: {
             author: 'Some kind of author',
             isPublished: false
         }
-    },{new: true})
+    }, {new: true})
     console.log(course)
 }
 
@@ -84,4 +128,4 @@ async function removeCourse(id) {
     console.log(course)
 }
 
-removeCourse('5c6c17afbd00263054531e3d')
+// removeCourse('5c6c17afbd00263054531e3d')
