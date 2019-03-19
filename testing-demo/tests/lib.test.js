@@ -1,5 +1,6 @@
 const lib = require('../lib')
 const db = require('../db')
+const mail = require('../mail')
 
 describe('absolute', () => {
     it('should return a positive number if input is positive', () => {
@@ -97,4 +98,35 @@ describe('applyDiscount', ()=> {
     });
 })
 
-describe
+describe('notifyCustomer', ()=> {
+// There is a better way to create mock functions
+    it('should send an email to the customer', function () {
+        db.getCustomerSync = (customerId) => {
+            return {email: 'a'}
+        }
+
+        let mailSent = false
+        mail.send = (email, message) => {
+            mailSent = true
+        }
+
+        lib.notifyCustomer({customerId: 1})
+
+        expect(mailSent).toBe(true)
+    });
+
+// This is the better way
+    it('should should send an email with better mocking solution', function () {
+        // mockFunction.mockReturnValue(1) return regular value
+        // mockFunction.mockResolvedValue(1) return Promise
+        // mockFunction.mockRejectedValue(new Error('...')) return error
+        db.getCustomerSync = jest.fn().mockReturnValue({email: 'a'})
+        mail.send = jest.fn()
+
+        lib.notifyCustomer({customerId: 1})
+        expect(mail.send).toHaveBeenCalled()
+        // Get array of calls then an array of arguments
+        expect(mail.send.mock.calls[0][0]).toBe('a')
+        expect(mail.send.mock.calls[0][1]).toMatch(/order/)
+    });
+})
