@@ -6,6 +6,10 @@
   "scripts": {
     "test": "jest --watchAll --verbose"
   },
+  "jest": {
+    "verbose": true,
+    "testURL": "http://localhost/"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
